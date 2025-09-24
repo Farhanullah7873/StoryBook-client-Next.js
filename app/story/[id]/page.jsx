@@ -13,7 +13,7 @@ export default function StoryPage() {
     const fetchStory = async () => {
       try {
         const res = await axios.get(
-          `https://storygenerator-production.up.railway.app/story/${id}`
+          `http://localhost:8080/story/${id}`
         );
         setStory(res.data.Story);
       } catch (err) {

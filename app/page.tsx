@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from "react";
 import Header from "@/app/Components/Header";
 import { X, Upload, Loader2, FileText } from "lucide-react";
@@ -13,7 +13,7 @@ const Home = () => {
   const [newStoryId, setNewStoryId] = useState<string | null>(null);
   const [stories, setStories] = useState<any[]>([]);
   const [loadingStories, setLoadingStories] = useState(true);
-
+const [id,setId]=useState("");
   const router = useRouter();
 
   // Fetch all stories
@@ -21,8 +21,9 @@ const Home = () => {
     const fetchStories = async () => {
       setLoadingStories(true);
       try {
-        const res = await axios.get("https://storygenerator-production.up.railway.app/story");
+        const res = await axios.get("http://localhost:8080/story");
         setStories(res.data.Stories || []);
+    
       } catch (err) {
         setStories([]);
       } finally {
@@ -53,9 +54,9 @@ const Home = () => {
       const formData = new FormData();
       formData.append("file", selectedFile, selectedFile.name);
 
-      // Upload story with proper headers
+      // Upload story
       const res = await axios.post(
-        "https://storygenerator-production.up.railway.app/story/upload",
+        "http://localhost:8080/story/upload",
         formData,
         {
           headers: {
@@ -65,6 +66,7 @@ const Home = () => {
       );
 
       if (res.status !== 200) throw new Error("Upload failed");
+setId(res.data.id);
 
       // Fetch updated stories list
       const storiesRes = await axios.get(
@@ -91,7 +93,6 @@ const Home = () => {
     <div>
       {/* Background */}
       <div className="p-8 bg-[url('https://images.pexels.com/photos/7476134/pexels-photo-7476134.jpeg')] bg-cover bg-center opacity-100 brightness-95">
-        
         {/* Navbar */}
         <Header />
 
@@ -148,7 +149,9 @@ const Home = () => {
               {selectedFile && (
                 <div className="mt-5 flex items-center gap-3 bg-gray-100 p-3 rounded-lg">
                   <FileText className="text-blue-600" />
-                  <span className="text-sm font-medium">{selectedFile.name}</span>
+                  <span className="text-sm font-medium">
+                    {selectedFile.name}
+                  </span>
                 </div>
               )}
 
@@ -169,23 +172,28 @@ const Home = () => {
             <div className="max-w-sm w-full bg-white rounded-2xl text-black p-8 shadow-xl text-center">
               {uploading ? (
                 <>
-                  <Loader2 className="animate-spin mx-auto text-blue-600" size={40} />
-                  <p className="mt-4 text-lg font-medium">Uploading your story...</p>
+                  <Loader2
+                    className="animate-spin mx-auto text-blue-600"
+                    size={40}
+                  />
+                  <p className="mt-4 text-lg font-medium">
+                    Uploading...
+                  </p>
                 </>
               ) : (
                 <>
-                  <p className="text-3xl mb-2">✅</p>
+                  <p className="text-3xl mb-2"></p>
                   <h3 className="text-xl font-bold">Upload Complete!</h3>
                   <p className="mt-2 text-gray-600">
-                    Your story has been successfully uploaded.
+                    Your story has been successfully Generated.
                   </p>
                   <button
                     onClick={() => {
                       setShowUploadModal(false);
                       if (newStoryId) {
-                        router.push(`/story/${newStoryId}`);
+                        router.push(`/story/${id}`);
                       } else {
-                        alert(`${newStoryId} Could not find new story ID.`);
+                        alert("Could not find new story ID.");
                       }
                     }}
                     className="mt-6 bg-blue-900 text-white rounded-xl px-6 py-3 font-medium hover:bg-blue-700"
@@ -201,31 +209,26 @@ const Home = () => {
         {/* Stories Grid from API */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-20">
           {loadingStories ? (
-            <div className="col-span-full text-center text-white text-xl">Loading stories...</div>
+            <div className="col-span-full text-center text-white text-xl">
+              Loading stories...
+            </div>
           ) : stories.length === 0 ? (
-            <div className="col-span-full text-center text-white text-xl">No stories found.</div>
+            <div className="col-span-full text-center text-white text-xl">
+              No stories found.
+            </div>
           ) : (
-            stories.map((story) => (
+            stories.map((story: any) => (
               <div
                 key={story._id}
-                className="rounded-2xl p-4 shadow-lg bg-white hover:scale-105 transition-transform duration-300 text-center flex flex-col justify-between h-full cursor-pointer"
+                className="rounded-2xl  p-4 shadow-lg bg-white hover:scale-105 transition-transform duration-300 text-center flex flex-col justify-between h-full cursor-pointer"
                 onClick={() => router.push(`/story/${story._id}`)}
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") router.push(`/story/${story._id}`);
-                }}
               >
-                <div>
-                  <p className="font-semibold text-lg text-black mb-2">{story.name}</p>
-                  <p className="text-gray-700 text-sm line-clamp-5 mb-4">
-                    {story.stories && story.stories.length > 0
-                      ? story.stories[0].slice(0, 200) +
-                        (story.stories[0].length > 200 ? "..." : "")
-                      : "No preview available."}
-                  </p>
-                </div>
-                <div className="text-xs text-gray-500">Pages: {story.pages}</div>
+                <h3 className="text-10 text-center  font-bold">
+                  {story.name || "Untitled Story"}
+                </h3>
+                <p className="text-gray-600 mt-2 line-clamp-3">
+                 pages: {story.pages || "No description available."}
+                </p>
               </div>
             ))
           )}
